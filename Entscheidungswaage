@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Entscheidungswaage – Touch & Raster</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background:#f4f4f4;
+      margin:0;
+      padding:10px;
+    }
+    #container {
+      max-width: 1100px;
+      margin: 0 auto;
+      text-align: center;
+    }
+    input.titleInput {
+      width: 90%;
+      font-size: 16px;
+      padding: 6px;
+      text-align: center;
+      border-radius: 6px;
+      border: 1px solid #aaa;
+    }
+
+    /* ========= STEIN-POOL ========= */
+    #stonePool {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      align-content: flex-start;
+      background: #fff;
+      padding: 12px;
+      border-radius: 12px;
+      margin-bottom: 20px;
+      min-height: 80px;
+    }
+
+    /* ========= STEINE (PUNKTE) ========= */
+    .weight {
+      width: 18px;          /* kleiner */
+      height: 18px;         /* kleiner */
+      background: #ff9800;  /* ORANGE */
+      border-radius: 50%;
+      margin: 4px;          /* etwas enger */
+      touch-action: none;
+      cursor: grab;
+    }
+
+    /* ========= BEREICHE ========= */
+    .areaWrapper {
+      display:flex;
+      justify-content:space-around;
+      flex-wrap:wrap;
+    }
+    .area {
+      width: 45%;
+      min-height: 160px;
+      background:#fafafa;
+      border: 3px dashed #bbb;
+      padding: 10px;
+      margin: 10px;
+      border-radius: 14px;
+
+      /* 👇 entscheidend fürs Raster/Anordnen */
+      display: flex;
+      flex-wrap: wrap;
+      align-content: flex-start;
+    }
+
+    /* ========= WAAGE ========= */
+    #scaleWrapper {
+      margin: 30px 0;
+    }
+    #scale {
+      width: 340px;
+      height: 8px;
+      background: #333;
+      margin: 20px auto;
+      position: relative;
+      transform-origin: 50% 50%;
+      transition: transform 0.4s ease;
+    }
+    .pan {
+      width: 135px;
+      height: 18px;
+      background: #777;
+      position: absolute;
+      top: 16px;
+      border-radius: 6px;
+    }
+    #leftPan { left: -135px; }
+    #rightPan { right: -135px; }
+
+    /* ========= BUTTON ========= */
+    button {
+      padding: 14px 28px;
+      font-size: 18px;
+      margin: 15px;
+      border-radius: 10px;
+      border: none;
+      background: #d32f2f;
+      color: white;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="container">
+    <h2>Entscheidungswaage</h2>
+
+    <div id="stonePool"></div>
+
+    <div class="areaWrapper">
+      <div>
+        <input class="titleInput" placeholder="Pro Veränderung">
+        <div class="area" id="leftArea"></div>
+      </div>
+
+      <div>
+        <input class="titleInput" placeholder="Contra Veränderung">
+        <div class="area" id="rightArea"></div>
+      </div>
+    </div>
+
+    <div id="scaleWrapper">
+      <div id="scale">
+        <div class="pan" id="leftPan"></div>
+        <div class="pan" id="rightPan"></div>
+      </div>
+    </div>
+
+    <button onclick="resetScale()">Reset</button>
+  </div>
+
+  <script>
+    const pool = document.getElementById('stonePool');
+    const leftArea = document.getElementById('leftArea');
+    const rightArea = document.getElementById('rightArea');
+    const scale = document.getElementById('scale');
+    let dragged = null;
+
+    /* Steine erzeugen */
+    for (let i = 0; i < 80; i++) {
+      const stone = document.createElement('div');
+      stone.className = 'weight';
+
+      stone.addEventListener('pointerdown', e => {
+        dragged = stone;
+        stone.setPointerCapture(e.pointerId);
+        stone.style.opacity = "0.6";
+      });
+
+      pool.appendChild(stone);
+    }
+
+    /* Ablegen */
+    document.addEventListener('pointerup', e => {
+      if (!dragged) return;
+
+      const target = document.elementFromPoint(e.clientX, e.clientY);
+
+      if (leftArea.contains(target)) {
+        leftArea.appendChild(dragged);
+      } else if (rightArea.contains(target)) {
+        rightArea.appendChild(dragged);
+      } else {
+        pool.appendChild(dragged);
+      }
+
+      dragged.style.opacity = "1";
+      dragged = null;
+      updateScale();
+    });
+
+    /* Waage aktualisieren */
+    function updateScale() {
+      const left = leftArea.children.length;
+      const right = rightArea.children.length;
+      const angle = Math.max(-20, Math.min(20, (right - left) * 1.2));
+      scale.style.transform = `rotate(${angle}deg)`;
+    }
+
+    /* Reset */
+    function resetScale() {
+      [...leftArea.children, ...rightArea.children].forEach(s => pool.appendChild(s));
+      updateScale();
+    }
+  </script>
+</body>
+</html>
